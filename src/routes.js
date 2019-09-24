@@ -109,7 +109,7 @@ module.exports = (app, options = {}) => {
         }
         res.json(result)
       } catch (err) {
-        debug((err.stack||err||`Empty error`).toString().red)
+        console.error(data, (err.stack || err || `Empty error`).toString().red)
         res.json({
           err: '500'
         })
