@@ -15,6 +15,8 @@ const server = express()
 
 //Normal usage: call the middleware
 funql.middleware(server, {
+    getMiddlewares:[],//default,
+    postMiddlewares:[],//
     allowGet:false, //default
     allowOverwrite:false, //default
     api: {
@@ -55,6 +57,21 @@ funql.middleware(app,{
 //Functions will be accessible by the express object:
 //app.api.helloWorld
 //app.api.backoffice.getUsers
+
+
+//Feature: adding an express middleware to get
+funql.middleware(app,{
+    allowGet:true,
+    getMiddlewares: [
+        function(req, res, next) {
+            //Here, you can implement your auth system
+            res.json('YOU_CANT_GET_ME')
+        }
+    ]
+})
+
+
+//More features? Just ask ;) !
 ````
 
 ## Client configuration
@@ -102,6 +119,10 @@ axios.get(`SERVER_URL/funql-api?body=${body}`, {
 .then(res => {
     //res.data equal to 'Hello Juan'
 })
+
+
+
+//More features? Just ask ;) !
 ````
 
 ## Roadmap

@@ -21,7 +21,33 @@ module.exports = (app, options = {}) => {
   }
 
   if (options.allowGet) {
-    app.get('/funql-api', async function configureFunqlRoute (req, res) {
+    if (!options.getMiddlewares) {
+      app.get('/funql-api', getGetHandler())
+    } else {
+      let args = []
+      args.unshift(getGetHandler())
+      options.getMiddlewares
+        .reverse()
+        .forEach(middleware => args.unshift(middleware))
+      args.unshift('/funql-api')
+      app.get.apply(app, args)
+    }
+  }
+
+  if (!options.postMiddlewares) {
+    app.post('/funql-api', getPostHandler())
+  } else {
+    let args = []
+    args.unshift(getPostHandler())
+    options.postMiddlewares
+      .reverse()
+      .forEach(middleware => args.unshift(middleware))
+    args.unshift('/funql-api')
+    app.post.apply(app, args)
+  }
+
+  function getGetHandler () {
+    return async function configureFunqlRoute (req, res) {
       res.header('Access-Control-Allow-Origin', req.headers.origin)
       res.header(
         'Access-Control-Allow-Headers',
@@ -35,42 +61,44 @@ module.exports = (app, options = {}) => {
         data.transform = require('atob')(data.transform)
       }
       await executeFunql(data, req, res)
-    })
+    }
   }
 
-  app.post('/funql-api', async function configureFunqlRoute (req, res) {
-    if (req.query.multiparty === '1') {
-      var multiparty = require('multiparty')
-      var form = new multiparty.Form()
-      var util = require('util')
-      form.parse(req, async function (err, fields, files) {
-        debug('multiparty', util.inspect({ fields: fields, files: files }))
-        let data = {
-          name: fields._funqlName
-        }
-        if (fields._funqlTransform) {
-          data.transform = fields._funqlTransform
-        }
-        let arg = {}
-        Object.keys(fields)
-          .filter(k => k.indexOf('_') !== 0)
-          .forEach(k => {
-            arg[k] = fields[k][0]
+  function getPostHandler () {
+    return async function configureFunqlRoute (req, res) {
+      if (req.query.multiparty === '1') {
+        var multiparty = require('multiparty')
+        var form = new multiparty.Form()
+        var util = require('util')
+        form.parse(req, async function (err, fields, files) {
+          debug('multiparty', util.inspect({ fields: fields, files: files }))
+          let data = {
+            name: fields._funqlName
+          }
+          if (fields._funqlTransform) {
+            data.transform = fields._funqlTransform
+          }
+          let arg = {}
+          Object.keys(fields)
+            .filter(k => k.indexOf('_') !== 0)
+            .forEach(k => {
+              arg[k] = fields[k][0]
+            })
+
+          let filesArg = {}
+          Object.keys(files).forEach(k => {
+            filesArg[k] = files[k][0]
           })
 
-        let filesArg = {}
-        Object.keys(files).forEach(k => {
-          filesArg[k] = files[k][0]
+          data.args = [arg, filesArg]
+          await executeFunql(data, req, res)
         })
-
-        data.args = [arg, filesArg]
+      } else {
+        let data = req.body
         await executeFunql(data, req, res)
-      })
-    } else {
-      let data = req.body
-      await executeFunql(data, req, res)
+      }
     }
-  })
+  }
 
   async function executeFunql (data, req, res) {
     let name = data.name
