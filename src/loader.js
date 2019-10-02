@@ -29,6 +29,7 @@ module.exports = mainScope => {
       let requirePath = path.join(options.path, f)
       self[f.split('.')[0]] = require(requirePath)
     })
+    let count = 0
     Object.keys(self)
       .map((k, index) => {
         var mod = self[k]
@@ -48,12 +49,21 @@ module.exports = mainScope => {
         let impl = fn.handler(mainScope)
         if (impl instanceof Promise) {
           impl
-            .then(handler => onReady(mainScope, fn, handler, options))
+            .then(handler => {
+              onReady(mainScope, fn, handler, options)
+              count++
+            })
             .catch(onError)
         } else {
           onReady(mainScope, fn, impl, options)
+          count++
         }
       })
+    debug(
+      `${count} functions loaded from ${readdirPath
+        .split(process.cwd())
+        .join('')}`
+    )
   }
 }
 
