@@ -19,7 +19,6 @@ test('Returning the api method name', done => {
                 name: 'foo'
             })
             .then(res => {
-                console.log(res.data)
                 expect(res.data).toBe('foo')
                 serverInstance.close()
                 done()

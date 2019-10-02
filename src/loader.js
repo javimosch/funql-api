@@ -1,5 +1,12 @@
-var debug = require('debug')(`funql-api:loader ${`${Date.now()}`.white}`)
-module.exports = app => {
+function getDebugInstance(name) {
+    return require('debug')(
+            `${`funql-api:${name}`.padEnd(15, ' ')} ${`${Date.now()}`.white}`
+  )
+}
+
+var debug
+module.exports = mainScope => {
+  debug = getDebugInstance('loader')
   return async function loadApiFunctions (options = {}) {
     // options.path
 
@@ -30,28 +37,49 @@ module.exports = app => {
           handler: mod.handler ? mod.handler : mod
         }
       })
+      .filter(fn => {
+        if (typeof fn.handler !== 'function') {
+          debug(`${fn.name} failed to load`)
+          return false
+        }
+        return true
+      })
       .forEach(fn => {
-        let impl = fn.handler(app)
+        let impl = fn.handler(mainScope)
         if (impl instanceof Promise) {
           impl
-            .then(handler => onReady(app, fn, handler, options))
+            .then(handler => onReady(mainScope, fn, handler, options))
             .catch(onError)
         } else {
-          onReady(app, fn, impl, options)
+          onReady(mainScope, fn, impl, options)
         }
       })
   }
 }
 
-function onReady (app, fn, impl, options = {}) {
+function onReady (mainScope, fn, impl, options = {}) {
   // console.log('TRACE DEF', options)
 
-  app.api = app.api || []
-  if (typeof app.api[fn.name] !== 'undefined') {
-    debug('API Function file', fn.name, 'exists. Skipping...')
+  mainScope.api = mainScope.api || {}
+
+  functionParent = mainScope.api
+
+  if (options.namespace) {
+    functionParent[options.namespace] = functionParent[options.namespace] || {}
+    functionParent = functionParent[options.namespace]
+  }
+
+  let allowOverwrite = false
+
+  if (options.allowOverwrite === true) {
+    allowOverwrite = true
+  }
+
+  if (!allowOverwrite && typeof functionParent[fn.name] !== 'undefined') {
+    debug(fn.name, ' duplicated. Skipping. (overwrite is disabled)')
   } else {
     // debug('API Function file', fn.name, 'loaded')
-    app.api[fn.name] = function () {
+    functionParent[fn.name] = function () {
       let optionsScope = {}
       if (typeof options.scope === 'function') {
         optionsScope = options.scope(this) || {}
@@ -92,11 +120,11 @@ function onReady (app, fn, impl, options = {}) {
       async function resolvePromise (resolve, r) {
         r = await r
         debug(
-          'api call',
+          'Initial',
           fn.name,
           r instanceof Array
-            ? 'Responded with ' + r.length + ' items'
-            : `Responded with object ${printKeys(r)}`
+            ? 'response has ' + r.length + ' items'
+            : `response is ${stringify(r)}`
         )
         resolve(r)
       }
@@ -120,11 +148,11 @@ function onReady (app, fn, impl, options = {}) {
           })
         } else {
           debug(
-            'api call',
+            'Initial',
             fn.name,
             r instanceof Array
-              ? 'Responded with ' + r.length + ' items'
-              : `Responded with object ${printKeys(r)}`
+              ? 'response has ' + r.length + ' items'
+              : `response is ${stringify(r)}`
           )
           return r
         }
@@ -138,16 +166,7 @@ function onError (err) {
   process.exit(1)
 }
 
-function printKeys (object = {}) {
-  if (!object) {
-    return object
-  }
-  let keys = Object.keys(object)
-  if (keys.length > 10) {
-    let count = keys.length
-    keys = keys.filter((k, index) => index < 10)
-    return `{${keys.join(', ')}... (${count} more)}`
-  } else {
-    return `{${keys.join(', ')}}`
-  }
+function stringify (object = {}) {
+  const { parse, stringify } = require('flatted/cjs')
+  return stringify(object)
 }

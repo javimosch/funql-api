@@ -25,7 +25,6 @@ test('Calling a function under a namespace', done => {
                 namespace: 'backend'
             })
             .then(res => {
-                console.log(res.data)
                 expect(res.data).toBe('BAR')
                 serverInstance.close()
                 done()
@@ -58,7 +57,6 @@ test('Calling an invalid function under a namespace', done => {
                 namespace: 'this_namspace_doesnt_exists'
             })
             .then(res => {
-                console.log(res.data)
                 expect(res.data.err).toBe('INVALID_NAME')
                 serverInstance.close()
                 done()

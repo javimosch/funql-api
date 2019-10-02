@@ -1,5 +1,5 @@
 module.exports = {
-    prepareServer(configureCallback, readyCallback) {
+    prepareServer(configureCallback, readyCallback, options = {}) {
         process.env.DEBUG = 'funql*'
         const funqlApi = require('../index')
         const axios = require('axios')
@@ -16,7 +16,14 @@ module.exports = {
                     limit: '50mb'
                 })
             )
-            configureCallback(server, funqlApi)
+
+            funqlApi.reset()
+
+            let p = configureCallback(server, funqlApi)
+            if (p instanceof Promise) {
+                await p
+            }
+
             let port = await getPort()
             let endpoint = `http://localhost:${port}`
             var serverInstance = server.listen(port, () =>

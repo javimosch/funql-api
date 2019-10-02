@@ -44,6 +44,17 @@ axios.post(`SERVER_URL/funql-api`, {
 })
 ````
 
+### Attach functions to express object
+
+```js
+funql.middleware(app,{
+    attachToExpress:true
+})
+//Functions will be accessible by the express object:
+//app.api.helloWorld
+//app.api.backoffice.getUsers
+```
+
 ## Roadmap
 
 - 2019 Q3: Initial release

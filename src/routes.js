@@ -124,6 +124,14 @@ module.exports = (app, options = {}) => {
           } else {
             result = transformed
           }
+
+          debug(
+            'Transformed',
+            data.name,
+            result instanceof Array
+              ? 'response has ' + result.length + ' items'
+              : `response is ${stringify(result)}`
+          )
         }
         res.json(result)
       } catch (err) {
@@ -134,4 +142,9 @@ module.exports = (app, options = {}) => {
       }
     }
   }
+}
+
+function stringify (object = {}) {
+  const { parse, stringify } = require('flatted/cjs')
+  return stringify(object)
 }
