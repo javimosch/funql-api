@@ -10,6 +10,11 @@ funql.middleware(server, {
     api: {
         async helloWorld(name) {
             return `Hello ${name}`
+        },
+        backoffice:{
+            getUsers(){
+                return ['Juan']
+            }
         }
     }
 })
@@ -19,11 +24,23 @@ funql.middleware(server, {
 
 ````js
 axios.post(`SERVER_URL/funql-api`, {
-    name: 'Misitioba'
+    name: 'helloWorld'
 })
 .then(res => {
     expect(res.data)
     .toBe('Hello Misitioba')
+})
+````
+
+### Namespaces
+
+````js
+axios.post(`SERVER_URL/funql-api`, {
+    name: 'getUsers',
+    namespace:'backoffice'
+})
+.then(res => {
+    //res.data equal to ['Juan']
 })
 ````
 

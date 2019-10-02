@@ -4,10 +4,22 @@ function clousureEval(_evalCode, _scope) {
     }.apply(_scope))
 }
 
-module.exports = (app, options = {}) => {
-        var api = options.api || {}
+function getDebugInstance(name) {
+    return require('debug')(
+            `${`funql-api:${name}`.padEnd(15, ' ')} ${`${Date.now()}`.white}`
+  )
+}
 
-        var debug = require('debug')(`funql-api:routes ${`${Date.now()}`.white}`)
+module.exports = (app, options = {}) => {
+  var api = options.api || {}
+
+  if (options.attachToExpress) {
+    app.api = app.api || {}
+    api = app.api
+  }
+
+  var debug = getDebugInstance('routes')
+
   app.get('/funql-api', async function configureFunqlRoute (req, res) {
     res.header('Access-Control-Allow-Origin', req.headers.origin)
     res.header(
@@ -53,7 +65,6 @@ module.exports = (app, options = {}) => {
         await executeFunql(data, req, res)
       })
     } else {
-      debug(`DATA`, req.body)
       let data = req.body
       await executeFunql(data, req, res)
     }
@@ -66,7 +77,15 @@ module.exports = (app, options = {}) => {
       name
     }
 
-    if (!api[name]) {
+    let apiFunction = api[name]
+
+    if (data.namespace) {
+      try {
+        apiFunction = api[data.namespace][name]
+      } catch (err) {}
+    }
+
+    if (!apiFunction || typeof apiFunction !== 'function') {
       res.json({
         err: 'INVALID_NAME'
       })
@@ -75,7 +94,7 @@ module.exports = (app, options = {}) => {
         if (data.args && data.args.length === 1 && data.args[0] === null) {
           data.args = null
         }
-        let result = await api[name].apply(functionScope, data.args || [])
+        let result = await apiFunction.apply(functionScope, data.args || [])
 
         if (data.transform && typeof data.transform === 'string') {
           var transformHandler = result => {
@@ -94,7 +113,6 @@ module.exports = (app, options = {}) => {
                 `;
     `}
               this.__handler.fn = ${data.transform}`
-            console.log('EVALUATING', clousureEvalString)
             clousureEval(clousureEvalString, clousureScope)
             return __handler.fn(result)
           }
