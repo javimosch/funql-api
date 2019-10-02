@@ -18,7 +18,8 @@ funql.middleware(server, {
     getMiddlewares:[],//default,
     postMiddlewares:[],//
     allowGet:false, //default
-    allowOverwrite:false, //default
+    allowOverwrite:false, //default,
+    attachToExpress:false,//default
     api: {
         //functions can be a promise (optional)
         async helloWorld(name) {
