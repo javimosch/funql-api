@@ -116,9 +116,7 @@ function onReady (mainScope, fn, impl, options = {}) {
         return new Promise(async (resolve, reject) => {
           try {
             let res = await Promise.all(
-              options.middlewares.map(m =>
-                m.apply(mergedScope, [middlewareArgs])
-              )
+              options.middlewares.map(m => m.apply(mergedScope, middlewareArgs))
             )
             if (res.find(r => !!r && !!r.err)) {
               r = res.find(r => !!r.err)

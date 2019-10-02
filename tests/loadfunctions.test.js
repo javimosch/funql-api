@@ -152,13 +152,19 @@ test('Call a function loaded from fs with loader middlewares', done => {
     }
 })
 
-test('Call a function loaded from fs and check the params', done => {
+test('Call a function loaded from fs with custom params', done => {
     prepareServer(configure, ready)
 
     async function configure(server, funqlApi) {
+        server.foo = 'FOO'
         await funqlApi.loadFunctionsFromFolder({
             params: [server],
-            path: require('path').join(process.cwd(), 'example-functions')
+            path: require('path').join(process.cwd(), 'example-functions'),
+            middlewares: [
+                app => {
+                    if (!app.foo) return { err: 500 }
+                }
+            ]
         })
         funqlApi.middleware(server, {
             api: {}
@@ -168,10 +174,11 @@ test('Call a function loaded from fs and check the params', done => {
     function ready({ axios, endpoint, serverInstance }) {
         axios
             .post(`${endpoint}/funql-api`, {
-                name: 'getAppKeysLength'
+                name: 'getScopeKeyValue',
+                args: ['foo']
             })
             .then(res => {
-                expect(res.data).not.toBeLessThan(10) // express object has more than 10 keys
+                expect(res.data).toBe('FOO')
                 serverInstance.close()
                 done()
             })
