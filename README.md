@@ -51,6 +51,24 @@ await funqlApi.loadFunctionsFromFolder({
     path: require('path').join(process.cwd(),'functions')
 })
 
+//Feature: Load functions support basic middlewares
+//These are different from the express middlewares (check above)
+await funqlApi.loadFunctionsFromFolder({
+    namespace:'admin',
+    path: require('path').join(process.cwd(),'functions')
+    middlewares:[async function(){
+        //All the functions in namespace admin
+        //will invoke this middleware before running the 
+        //function.
+        //If we return {err:'something'}
+        //The function will not be called
+        //And the client will receive a 200 status
+        //with the response.
+        //useful for controlled exceptions.
+        return this.user.role!=='admin'?({err:401}):true
+    }]
+})
+
 //Feature: Attach functions to express object
 funql.middleware(app,{
     attachToExpress:true
@@ -70,6 +88,7 @@ funql.middleware(app,{
         }
     ]
 })
+
 
 
 //More features? Just ask ;) !

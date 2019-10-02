@@ -114,3 +114,40 @@ test('Transform a function loaded from folder', done => {
             })
     }
 })
+
+test('Call a function loaded from fs with loader middlewares', done => {
+    prepareServer(configure, ready)
+
+    async function configure(server, funqlApi) {
+        await funqlApi.loadFunctionsFromFolder({
+            path: require('path').join(process.cwd(), 'example-functions'),
+            middlewares: [
+                async function() {
+                    // this.name
+                    // this.user
+                    // this.req
+                    // this.res
+                    return {
+                        err: 'UPS'
+                    }
+                }
+            ]
+        })
+        funqlApi.middleware(server, {
+            api: {}
+        })
+    }
+
+    function ready({ axios, endpoint, serverInstance }) {
+        axios
+            .post(`${endpoint}/funql-api`, {
+                name: 'helloWorld',
+                args: ['Luis']
+            })
+            .then(res => {
+                expect(res.data.err).toBe('UPS')
+                serverInstance.close()
+                done()
+            })
+    }
+})
