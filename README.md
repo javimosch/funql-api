@@ -1,16 +1,28 @@
 # funql-api
 
-Run your favorite server function directly from the browser.
+Build your next function based api today.
+
+## Features
+
+- **Load functions from FileSystem**
+- **Transform responses in the server side**
+- **Namespaces**
 
 ## Server configuration
 
 ````js
 const server = express()
+
+//Normal usage: call the middleware
 funql.middleware(server, {
+    allowGet:false, //default
+    allowOverwrite:false, //default
     api: {
+        //functions can be a promise (optional)
         async helloWorld(name) {
             return `Hello ${name}`
         },
+        //this is a namespace
         backoffice:{
             getUsers(){
                 return ['Juan']
@@ -18,46 +30,82 @@ funql.middleware(server, {
         }
     }
 })
-````
 
-## Client configuration
-
-````js
-axios.post(`SERVER_URL/funql-api`, {
-    name: 'helloWorld'
+//Feature: Load functions form folders
+await funqlApi.loadFunctionsFromFolder({
+    path: require('path').join(process.cwd(),'functions')
 })
-.then(res => {
-    expect(res.data)
-    .toBe('Hello Misitioba')
+
+//Feature: Overwrite when loading functions
+await funqlApi.loadFunctionsFromFolder({
+    allowOverwrite:true,
+    path: require('path').join(process.cwd(),'functions')
 })
-````
 
-### Namespaces
-
-````js
-axios.post(`SERVER_URL/funql-api`, {
-    name: 'getUsers',
-    namespace:'backoffice'
+//Feature: Load functions into a namespace
+await funqlApi.loadFunctionsFromFolder({
+    namespace:'backoffice',
+    path: require('path').join(process.cwd(),'functions')
 })
-.then(res => {
-    //res.data equal to ['Juan']
-})
-````
 
-### Attach functions to express object
-
-```js
+//Feature: Attach functions to express object
 funql.middleware(app,{
     attachToExpress:true
 })
 //Functions will be accessible by the express object:
 //app.api.helloWorld
 //app.api.backoffice.getUsers
-```
+````
+
+## Client configuration
+
+````js
+
+//Normal Usage: Just a post request
+axios.post(`SERVER_URL/funql-api`, {
+    name: 'helloWorld',
+    args:['Juan']
+})
+.then(res => {
+    //res.data equal to 'Hello Juan'
+})
+
+//Feature: namespaces
+axios.post(`SERVER_URL/funql-api`, {
+    namespace:'backoffice',
+    name: 'getUsers'
+})
+.then(res => {
+    //res.data equal to ['Juan']
+})
+
+//Feature: transform in the server-side
+axios.post(`SERVER_URL/funql-api`, {
+    namespace:'backoffice',
+    name: 'getUsers',
+    transform: function(response) {
+        return response.map(r=>r.toLowerCase())
+    }.toString()
+})
+.then(res => {
+    //res.data equal to ['juan']
+})
+
+//Feature: allowGet:true
+body = require('btoa')(JSON.stringify({
+    name: 'foo'
+}))
+axios.get(`SERVER_URL/funql-api?body=${body}`, {
+    name: 'helloWorld',
+    args:['Juan']
+})
+.then(res => {
+    //res.data equal to 'Hello Juan'
+})
+````
 
 ## Roadmap
 
-- 2019 Q3: Initial release
+- 2019 Q2: Initial release
+- 2019 Q3: Load functions from folder
 - 2019 Q4: Client side dynamic api library
-- 2019 Q4: Load functions from folder
-- 2020 Q1: Who knows

@@ -27,7 +27,7 @@ module.exports = {
             let port = await getPort()
             let endpoint = `http://localhost:${port}`
             var serverInstance = server.listen(port, () =>
-                readyCallback({ endpoint, serverInstance, axios })
+                readyCallback({ endpoint, serverInstance, axios, app: server })
             )
         }
     }

@@ -11,30 +11,32 @@ function getDebugInstance(name) {
 }
 
 module.exports = (app, options = {}) => {
+  var debug = getDebugInstance('routes')
+
   var api = options.api || {}
 
   if (options.attachToExpress) {
-    app.api = app.api || {}
+    app.api = api || {}
     api = app.api
   }
 
-  var debug = getDebugInstance('routes')
+  if (options.allowGet) {
+    app.get('/funql-api', async function configureFunqlRoute (req, res) {
+      res.header('Access-Control-Allow-Origin', req.headers.origin)
+      res.header(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept'
+      )
 
-  app.get('/funql-api', async function configureFunqlRoute (req, res) {
-    res.header('Access-Control-Allow-Origin', req.headers.origin)
-    res.header(
-      'Access-Control-Allow-Headers',
-      'Origin, X-Requested-With, Content-Type, Accept'
-    )
-
-    let body = req.query.body
-    body = body.split('PLUS').join('+')
-    let data = JSON.parse(require('atob')(body))
-    if (data.transformEncoded) {
-      data.transform = require('atob')(data.transform)
-    }
-    await executeFunql(data, req, res)
-  })
+      let body = req.query.body
+      body = body.split('PLUS').join('+')
+      let data = JSON.parse(require('atob')(body))
+      if (data.transformEncoded) {
+        data.transform = require('atob')(data.transform)
+      }
+      await executeFunql(data, req, res)
+    })
+  }
 
   app.post('/funql-api', async function configureFunqlRoute (req, res) {
     if (req.query.multiparty === '1') {
