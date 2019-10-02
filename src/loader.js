@@ -8,7 +8,11 @@ var debug
 module.exports = mainScope => {
   debug = getDebugInstance('loader')
   return async function loadApiFunctions (options = {}) {
-    // options.path
+    // The function file will be called with definitionArgs as parameters
+    let definitionArgs = [mainScope]
+    if (options.params) {
+      options.params.reverse().forEach(p => definitionArgs.unshift(p))
+    }
 
     var path = require('path')
     // let readdirPath = path.join(process.cwd(), options.path)
@@ -46,7 +50,7 @@ module.exports = mainScope => {
         return true
       })
       .forEach(fn => {
-        let impl = fn.handler(mainScope)
+        let impl = fn.handler.apply(fn, definitionArgs)
         if (impl instanceof Promise) {
           impl
             .then(handler => {
@@ -101,13 +105,20 @@ function onReady (mainScope, fn, impl, options = {}) {
 
       let r = null // final result
 
+      let middlewareArgs = [mainScope]
+      if (options.params) {
+        options.params.reverse().forEach(p => middlewareArgs.unshift(p))
+      }
+
       // middlwares
       if (options.middlewares) {
         let args = arguments
         return new Promise(async (resolve, reject) => {
           try {
             let res = await Promise.all(
-              options.middlewares.map(m => m.apply(mergedScope, [mainScope]))
+              options.middlewares.map(m =>
+                m.apply(mergedScope, [middlewareArgs])
+              )
             )
             if (res.find(r => !!r && !!r.err)) {
               r = res.find(r => !!r.err)
