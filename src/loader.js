@@ -63,10 +63,13 @@ module.exports = mainScope => {
           count++
         }
       })
+
+    let ns = options.namespace ? ` into namespace ${options.namespace}` : ''
+
     debug(
       `${count} functions loaded from ${readdirPath
         .split(process.cwd())
-        .join('')}`
+        .join('')}${ns}`
     )
   }
 }
