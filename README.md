@@ -8,6 +8,10 @@ Build your next function based api today.
 - **Transform responses in the server side**
 - **Namespaces**
 
+## Requirements
+
+- **body-parser**
+
 ## Server configuration
 
 ````js
