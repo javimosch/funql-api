@@ -1,6 +1,6 @@
 function getDebugInstance(name) {
     return require('debug')(
-            `${`funql-api:${name}`.padEnd(15, ' ')} ${`${Date.now()}`.white}`
+            `${`funql:${name}`.padEnd(15, ' ')} ${`${Date.now()}`.white}`
   )
 }
 
