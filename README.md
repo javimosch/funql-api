@@ -19,11 +19,13 @@ const server = express()
 
 //Normal usage: call the middleware
 funql.middleware(server, {
-    getMiddlewares:[],//default,
-    postMiddlewares:[],//
-    allowGet:false, //default
-    allowOverwrite:false, //default,
-    attachToExpress:false,//default
+    /*defaults*/
+    getMiddlewares:[],
+    postMiddlewares:[],
+    allowGet:false,
+    allowOverwrite:false,
+    attachToExpress:false,
+    allowCORS: false,
     api: {
         //functions can be a promise (optional)
         async helloWorld(name) {
@@ -93,7 +95,15 @@ funql.middleware(app,{
     ]
 })
 
+//Feature: Enable CORS to all request
+funql.middleware(app,{
+    allowCORS:true
+})
 
+//Feature: Enable CORS to certain origins
+funql.middleware(app,{
+    allowCORS:['client1.domain.com','client2.domain.com']
+})
 
 //More features? Just ask ;) !
 ````

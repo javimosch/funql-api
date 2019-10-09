@@ -36,14 +36,47 @@ module.exports = (app, options = {}) => {
 
   if (!options.postMiddlewares) {
     app.post('/funql-api', getPostHandler())
+    debug('Post loaded without middlewares')
   } else {
     let args = []
     args.unshift(getPostHandler())
     options.postMiddlewares
       .reverse()
       .forEach(middleware => args.unshift(middleware))
+
+    if (options.allowCORS) {
+      if (options.allowCORS === true) {
+        args.unshift(require('cors')())
+        app.options('/funql-api', require('cors')())
+      } else {
+        if (['object', 'string'].includes(typeof options.allowCORS)) {
+          let urls = options.allowCORS
+          urls = typeof urls === 'string' ? [urls] : urls
+          urls = urls.filter(url => !!url && typeof url === 'string')
+          if (urls.length > 0) {
+            args.unshift(getCorsWhitelistMiddleware(urls))
+            app.options('/funql-api', require('cors')())
+          }
+        }
+      }
+    }
+
+    function getCorsWhitelistMiddleware (whitelist) {
+      var corsOptionsDelegate = function (req, callback) {
+        var corsOptions
+        if (whitelist.indexOf(req.header('Origin')) !== -1) {
+          corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
+        } else {
+          corsOptions = { origin: false } // disable CORS for this request
+        }
+        callback(null, corsOptions) // callback expects two parameters: error and options
+      }
+      return require('cors')(corsOptionsDelegate)
+    }
+
     args.unshift('/funql-api')
     app.post.apply(app, args)
+    // debug('Post loaded with ', options.postMiddlewares.length, 'middlewares')
   }
 
   function getGetHandler () {
@@ -121,7 +154,7 @@ module.exports = (app, options = {}) => {
       })
     } else {
       try {
-        data.args = !(data.args instanceof Array)?[data.args]:data.args
+        data.args = !(data.args instanceof Array) ? [data.args] : data.args
         if (data.args && data.args.length === 1 && data.args[0] === null) {
           data.args = null
         }
