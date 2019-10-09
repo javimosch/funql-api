@@ -121,6 +121,7 @@ module.exports = (app, options = {}) => {
       })
     } else {
       try {
+        data.args = !(data.args instanceof Array)?[data.args]:data.args
         if (data.args && data.args.length === 1 && data.args[0] === null) {
           data.args = null
         }
