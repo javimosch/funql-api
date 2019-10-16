@@ -77,6 +77,13 @@ module.exports = mainScope => {
 function onReady (mainScope, fn, impl, options = {}) {
   // console.log('TRACE DEF', options)
 
+  if (typeof impl !== 'function') {
+    debug(
+      fn.name.yellow,
+      'has an invalid implementation (check funql-api docs)'.red
+    )
+  }
+
   mainScope.api = mainScope.api || {}
 
   functionParent = mainScope.api
@@ -142,11 +149,11 @@ function onReady (mainScope, fn, impl, options = {}) {
       async function resolvePromise (resolve, r) {
         r = await r
         debug(
-          'Initial',
           fn.name,
           r instanceof Array
             ? 'response has ' + r.length + ' items'
-            : `response is ${stringify(r)}`
+            : `response is ${stringify(r)}`,
+          r instanceof Array ? `First item is ${stringify(r[0])}` : undefined
         )
         resolve(r)
       }
@@ -170,11 +177,11 @@ function onReady (mainScope, fn, impl, options = {}) {
           })
         } else {
           debug(
-            'Initial',
             fn.name,
             r instanceof Array
               ? 'response has ' + r.length + ' items'
-              : `response is ${stringify(r)}`
+              : `response is ${stringify(r)}`,
+            r instanceof Array ? `First item is ${stringify(r[0])}` : undefined
           )
           return r
         }

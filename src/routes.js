@@ -11,6 +11,7 @@ function getDebugInstance(name) {
 }
 
 module.exports = (app, options = {}) => {
+  var prettyjson = require('prettyjson')
   var debug = getDebugInstance('routes')
 
   var api = options.api || {}
@@ -87,12 +88,18 @@ module.exports = (app, options = {}) => {
         'Origin, X-Requested-With, Content-Type, Accept'
       )
 
-      let body = req.query.body
+      let body = req.query.body || ''
       body = body.split('PLUS').join('+')
-      let data = JSON.parse(require('atob')(body))
+      let data = {}
+      try {
+        data = JSON.parse(require('atob')(body))
+      } catch (err) {}
       if (data.transformEncoded) {
         data.transform = require('atob')(data.transform)
       }
+      data.name = req.query.name || data.name
+      data.namespace = req.query.ns || req.query.namespace || data.namespace
+      debug(data.name, 'GET', prettyjson.render(data))
       await executeFunql(data, req, res)
     }
   }
@@ -124,10 +131,13 @@ module.exports = (app, options = {}) => {
           })
 
           data.args = [arg, filesArg]
+          debug(data.name)
           await executeFunql(data, req, res)
         })
       } else {
         let data = req.body
+        // debug('POST',prettyjson.render(data))
+        debug(data.name)
         await executeFunql(data, req, res)
       }
     }
@@ -149,6 +159,7 @@ module.exports = (app, options = {}) => {
     }
 
     if (!apiFunction || typeof apiFunction !== 'function') {
+      debug(data.name, 'response is INVALID_NAME')
       res.json({
         err: 'INVALID_NAME'
       })
@@ -194,7 +205,8 @@ module.exports = (app, options = {}) => {
             data.name,
             result instanceof Array
               ? 'response has ' + result.length + ' items'
-              : `response is ${stringify(result)}`
+              : `response is ${stringify(result)}`,
+              result instanceof Array ? `First item is ${stringify(result[0])}` : undefined
           )
         }
         res.json(result)
