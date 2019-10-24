@@ -2,13 +2,14 @@ module.exports = {
     getDebugInstance
 }
 
-function getDebugInstance(name, level = 3) {
+function getDebugInstance(name, level = 4) {
     let levelLabel = {
         1: 'ERROR'.red,
         2: 'WARN'.yellow,
-        3: 'DEBUG'.grey
+        3: 'INFO'.blue,
+        4: 'DEBUG'.grey
     }
-    let _level = parseInt(process.env.DEBUG_LEVEL) || 3
+    let _level = parseInt(process.env.DEBUG_LEVEL) || 4
     if (level > _level) {
         return () => {}
     } else {
