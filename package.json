@@ -1,12 +1,13 @@
 {
     "name": "funql-api",
     "main": "index.js",
-    "version": "1.2.0",
+    "version": "1.2.3",
     "repository": "git@github.com:javimosch/funql-api.git",
     "author": "Javi <arancibiajav@gmail.com>",
     "license": "MIT",
     "devDependencies": {
         "axios": "^0.19.0",
+        "btoa": "^1.2.1",
         "express": "^4.17.1",
         "get-port": "^5.0.0",
         "jest": "^24.9.0",

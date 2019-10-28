@@ -1,11 +1,12 @@
 const prepareServer = require('./common').prepareServer
+const functionsFolderPath = 'examples/common/functions_folder_one'
 
 test('Call a function loaded from fs', done => {
     prepareServer(configure, ready)
 
     async function configure(server, funqlApi) {
         await funqlApi.loadFunctionsFromFolder({
-            path: require('path').join(process.cwd(), 'example-functions')
+            path: require('path').join(process.cwd(), functionsFolderPath)
         })
         funqlApi.middleware(server, {
             api: {}
@@ -31,7 +32,7 @@ test('Functions loaded from fs are replaced by functions passed by param', done 
 
     async function configure(server, funqlApi) {
         await funqlApi.loadFunctionsFromFolder({
-            path: require('path').join(process.cwd(), 'example-functions')
+            path: require('path').join(process.cwd(), functionsFolderPath)
         })
         funqlApi.middleware(server, {
             api: {
@@ -62,7 +63,7 @@ test('Call a function loaded into a namespace', done => {
     async function configure(server, funqlApi) {
         await funqlApi.loadFunctionsFromFolder({
             namespace: 'loadedFromFolder',
-            path: require('path').join(process.cwd(), 'example-functions')
+            path: require('path').join(process.cwd(), functionsFolderPath)
         })
         funqlApi.middleware(server, {
             api: {
@@ -93,7 +94,7 @@ test('Transform a function loaded from folder', done => {
 
     async function configure(server, funqlApi) {
         await funqlApi.loadFunctionsFromFolder({
-            path: require('path').join(process.cwd(), 'example-functions')
+            path: require('path').join(process.cwd(), functionsFolderPath)
         })
         funqlApi.middleware(server, {})
     }
@@ -120,7 +121,7 @@ test('Call a function loaded from fs with loader middlewares', done => {
 
     async function configure(server, funqlApi) {
         await funqlApi.loadFunctionsFromFolder({
-            path: require('path').join(process.cwd(), 'example-functions'),
+            path: require('path').join(process.cwd(), functionsFolderPath),
             middlewares: [
                 async function() {
                     // this.name
@@ -159,7 +160,7 @@ test('Call a function loaded from fs with custom params', done => {
         server.foo = 'FOO'
         await funqlApi.loadFunctionsFromFolder({
             params: [server],
-            path: require('path').join(process.cwd(), 'example-functions'),
+            path: require('path').join(process.cwd(), functionsFolderPath),
             middlewares: [
                 app => {
                     if (!app.foo) return { err: 500 }

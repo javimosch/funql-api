@@ -1,4 +1,5 @@
-export default async function funql(name, args = [], options = {}) {
+/* eslint-disable */
+export async function funql(name, args = [], options = {}) {
     if (!name) {
         throw new Error('NAME_REQUIRED')
     }
@@ -14,7 +15,7 @@ export default async function funql(name, args = [], options = {}) {
         ...options,
         name: name,
         args: args,
-        namespace: process.env.VUE_APP_FUNQL_NAMESPACE || options.namespace || options.ns
+        namespace: process.env.VUE_APP_FUNQL_NAMESPACE || options.namespace || options.ns,
     }
     const elapsed = calculateElapsed()
     const rawResponse = await fetch(`${url}?n=${name}&ns=${request.namespace}`, {
@@ -22,14 +23,14 @@ export default async function funql(name, args = [], options = {}) {
         mode: 'cors',
         headers: {
             Accept: 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
     })
     const response = await rawResponse.json()
     debug(name, elapsed(), {
         request,
-        response
+        response,
     })
     if (response.err) {
         response.err =
@@ -56,7 +57,7 @@ export function getDebugInstance(name, level = 4) {
         1: 'ERROR',
         2: 'WARN',
         3: 'INFO',
-        4: 'DEBUG'
+        4: 'DEBUG',
     }
 
     let debugEnv = parseInt(process.env.VUE_APP_DEBUG) || 'funql*'
