@@ -26,6 +26,7 @@ funql.middleware(server, {
     allowOverwrite:false,
     attachToExpress:false,
     allowCORS: false,
+    bodyParser:true, //required for http post
     api: {
         //functions can be a promise (optional)
         async helloWorld(name) {
@@ -103,6 +104,18 @@ funql.middleware(app,{
 //Feature: Enable CORS to certain origins
 funql.middleware(app,{
     allowCORS:['client1.domain.com','client2.domain.com']
+})
+
+//Feature: Disable bodyParser (you will need to implement your own bodyParser middleware if you want to use normal http post)
+funql.middleware(app,{
+    bodyParser: false
+})
+
+//Feature: Custom bodyParser options
+funql.middleware(app,{
+    bodyParser: {
+        limit: '50mb'
+    }
 })
 
 //More features? Just ask ;) !
