@@ -12,7 +12,21 @@ module.exports = (app, options = {}) => {
         var debugWarn = getDebugInstance('routes', 2)
         var debugError = getDebugInstance('routes', 1)
 
+        options.bodyParser = typeof options.bodyParser === 'undefined' ? true : options.bodyParser
+        if(options.bodyParser!==false){
+            const bodyParser = require('body-parser')
+            const bodyParserOptions = typeof options.bodyParser === 'object' ? options.bodyParser : {
+                limit: '10mb'
+            }
+            app.use(
+                bodyParser.json(bodyParserOptions)
+            ) 
+        }else{
+            debugWarn('bodyParser disabled, please implement your own bodyParser middleware to use POST route')
+        }
+
         var api = options.api || {}
+        
 
         if (options.attachToExpress) {
             app.api = api || {}
@@ -22,6 +36,8 @@ module.exports = (app, options = {}) => {
         if (options.allowGet) {
             if (!options.getMiddlewares) {
                 app.get('/funql-api', getGetHandler())
+                app.get('/funql-api/:name', getGetHandler())
+                app.get('/funql-api/:name/:namespace', getGetHandler())
             } else {
                 let args = []
                 args.unshift(getGetHandler())
@@ -34,19 +50,30 @@ module.exports = (app, options = {}) => {
         }
 
         if (!options.postMiddlewares) {
-            app.post('/funql-api', getPostHandler())
-            debug('Post loaded without middlewares')
+            let args = []
+            args.unshift(getPostHandler())
+            unshiftCorsMiddleware(args)
+            args.unshift('/funql-api')
+            app.post.apply(app, args)
+            debug('POST available without middlewares under /funql-api')
         } else {
             let args = []
             args.unshift(getPostHandler())
             options.postMiddlewares
                 .reverse()
                 .forEach(middleware => args.unshift(middleware))
+            unshiftCorsMiddleware(args)
+            args.unshift('/funql-api')
+            app.post.apply(app, args)
+            debug(`POST available with ${options.postMiddlewares.length} middlewares under /funql-api`)
+        }
 
+        function unshiftCorsMiddleware(args){
             if (options.allowCORS) {
                 if (options.allowCORS === true) {
                     args.unshift(require('cors')())
                     app.options('/funql-api', require('cors')())
+                    debug(`CORS enabled for *`)
                 } else {
                     if (['object', 'string'].includes(typeof options.allowCORS)) {
                         let urls = options.allowCORS
@@ -55,6 +82,7 @@ module.exports = (app, options = {}) => {
                         if (urls.length > 0) {
                             args.unshift(getCorsWhitelistMiddleware(urls))
                             app.options('/funql-api', require('cors')())
+                            debug(`CORS enabled for `,urls)
                         }
                     }
                 }
@@ -72,10 +100,6 @@ module.exports = (app, options = {}) => {
                 }
                 return require('cors')(corsOptionsDelegate)
             }
-
-            args.unshift('/funql-api')
-            app.post.apply(app, args)
-                // debug('Post loaded with ', options.postMiddlewares.length, 'middlewares')
         }
 
         function getGetHandler() {
@@ -95,8 +119,8 @@ module.exports = (app, options = {}) => {
                 if (data.transformEncoded) {
                     data.transform = require('atob')(data.transform)
                 }
-                data.name = req.query.name || data.name
-                data.namespace = req.query.ns || req.query.namespace || data.namespace
+                data.name = req.query.name || data.name || req.params.name
+                data.namespace = req.query.ns || req.query.namespace || data.namespace || req.params.namespace
                 debug(data.name, 'GET', prettyjson.render(data))
                 await executeFunql(data, req, res)
             }
@@ -134,6 +158,12 @@ module.exports = (app, options = {}) => {
                     })
                 } else {
                     let data = req.body
+
+                    if(!req.body && options.bodyParser === false){
+                        debugError('POST route requires a bodyParser middleware')
+                        return res.status(500).json({err:500})
+                    }
+
                         // debug('POST',prettyjson.render(data))
                     debug(data.name)
                     await executeFunql(data, req, res)
@@ -148,16 +178,24 @@ module.exports = (app, options = {}) => {
                 name
             }
 
+            let rootObject = api[name]
+
             let apiFunction = api[name]
 
             if (data.namespace) {
                 try {
+
+                    if(!api[data.namespace]){
+                        debugWarn(`Requested namespace '${data.namespace}' do not exists.`)
+                    }
+
+                    rootObject =  api[data.namespace] || {}
                     apiFunction = api[data.namespace][name]
                 } catch (err) {}
             }
 
             if (!apiFunction || typeof apiFunction !== 'function') {
-                debugWarn(data.name, 'response is INVALID_NAME')
+                debugWarn(data.name, `response is INVALID_NAME`)
                 res.json({
                     err: 'INVALID_NAME'
                 })

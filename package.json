@@ -21,6 +21,8 @@
         "debug": "^4.1.1",
         "flatted": "^2.0.1",
         "multiparty": "^4.2.1",
-        "prettyjson": "^1.2.1"
+        "pretty": "^2.0.0",
+        "prettyjson": "^1.2.1",
+        "sander": "^0.6.0"
     }
 }
