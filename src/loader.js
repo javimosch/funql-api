@@ -17,7 +17,21 @@ module.exports = mainScope => {
             // let readdirPath = path.join(process.cwd(), options.path)
         let readdirPath = options.path
         var sander = require('sander')
+
+        if (!(await sander.exists(readdirPath))) {
+            debugError(
+                'Failed to load api functions from',
+                readdirPath
+                .split(__dirname)
+                .join('')
+                .split(process.cwd())
+                .join('')
+            )
+            return
+        }
+
         let files = await sander.readdir(readdirPath)
+
         files = files
             .filter(f => f !== 'index.js')
             .filter(f => {
@@ -30,6 +44,12 @@ module.exports = mainScope => {
 
         files.forEach(f => {
             let requirePath = path.join(options.path, f)
+
+            mainScope.apiInfo = mainScope.apiInfo || {}
+            mainScope.apiInfo[f.split('.js').join('')] =
+                mainScope.apiInfo[f.split('.js').join('')] || {}
+            mainScope.apiInfo[f.split('.js').join('')].path = requirePath
+
             self[f.split('.')[0]] = require(requirePath)
         })
         let count = 0
@@ -68,10 +88,15 @@ module.exports = mainScope => {
                 }
             })
 
-        let ns = options.namespace ? ` into namespace ${options.namespace}` : ''
+        let ns = options.namespace ? ` into namespace '${options.namespace}'` : ''
 
+        const readdirShortPath = readdirPath
+            .split(__dirname)
+            .join('')
+            .split(process.cwd())
+            .join('')
         debug(
-            `${count} functions loaded from ${readdirPath
+            `${count} functions loaded from ${readdirShortPath
         .split(process.cwd())
         .join('')}${ns}`
         )
@@ -152,13 +177,14 @@ function onReady(mainScope, fn, impl, options = {}) {
 
             async function resolvePromise(resolve, r) {
                 r = await r
-                const debugFn = !!r.err  ? debugWarn : debug
+                r = r === undefined ? {} : r
+                const debugFn = r.err ? debugWarn : debug
                 debugFn(
                     fn.name,
                     r instanceof Array ?
                     'response has ' + r.length + ' items' :
                     `response is ${stringify(r)}`,
-                    r instanceof Array ? `First item is ${stringify(r[0])}` : ""
+                    r instanceof Array ? `First item is ${stringify(r[0])}` : ''
                 )
                 resolve(r)
             }
@@ -185,7 +211,7 @@ function onReady(mainScope, fn, impl, options = {}) {
                         r instanceof Array ?
                         'response has ' + r.length + ' items' :
                         `response is ${stringify(r)}`,
-                        r instanceof Array ? `First item is ${stringify(r[0])}` : ""
+                        r instanceof Array ? `First item is ${stringify(r[0])}` : ''
                     )
                     return r
                 }

@@ -13,8 +13,23 @@ function getDebugInstance(name, level = 4) {
     if (level > _level) {
         return () => {}
     } else {
-        return require('debug')(
-                `${`funql:${name}`.padEnd(15, ' ')} ${levelLabel[level].padEnd(5, ' ')} ${
+        if (
+            (process.env.DEBUG || '').indexOf('funql') === -1 && [1, 2].includes(level)
+        ) {
+            return function() {
+                    let args = Array.prototype.slice.call(arguments)
+                    args.unshift(
+                            `${`funql:${name}`.padEnd(15, ' ')} ${levelLabel[level].padEnd(
+            7,
+            ' '
+          )} ${`${Date.now()}`.white}`
+        )
+        console.log.apply(console, args)
+      }
+    }
+
+    return require('debug')(
+      `${`funql:${name}`.padEnd(15, ' ')} ${levelLabel[level].padEnd(7, ' ')} ${
         `${Date.now()}`.white
       }`
     )
