@@ -12,6 +12,21 @@ Interact with the server-side with functions and promises.
 - **Namespaces**
 - **Client-side library**
 
+## Installation
+
+```shell
+npm i --save funql-api
+yarn add funql-api
+```
+
+```js
+import funql from 'funql-api'
+```
+
+```js
+const funql = require('funql')
+```
+
 ## Server configuration
 
 ````js
@@ -45,7 +60,7 @@ funql.middleware(app, {
 #### Basic usage
 
 ```js
-await funqlApi.loadFunctionsFromFolder({
+await funql.loadFunctionsFromFolder({
     path: require('path').join(process.cwd(),'functions')
 })
 ```
@@ -55,7 +70,7 @@ await funqlApi.loadFunctionsFromFolder({
 These middlewares will act only on the functions loaded from this path. These are not express middlewares!
 
 ```js
-await funqlApi.loadFunctionsFromFolder({
+await funql.loadFunctionsFromFolder({
     namespace:'admin',
     path: require('path').join(process.cwd(),'functions')
     middlewares:[async function(){
@@ -73,7 +88,7 @@ return this.user.role!=='admin'?
 If the function already exists, it will be overwritted.
 
 ```js
-await funqlApi.loadFunctionsFromFolder({
+await funql.loadFunctionsFromFolder({
     allowOverwrite:true,
     path: require('path').join(process.cwd(),'functions')
 })
@@ -82,7 +97,7 @@ await funqlApi.loadFunctionsFromFolder({
 #### Load functions into namespace
 
 ```js
-await funqlApi.loadFunctionsFromFolder({
+await funql.loadFunctionsFromFolder({
     namespace:'backoffice',
     path: require('path').join(process.cwd(),'functions')
 })
