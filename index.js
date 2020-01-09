@@ -1,5 +1,6 @@
 require('colors')
 
+
 let scope = {}
 
 module.exports = {
@@ -11,6 +12,9 @@ module.exports = {
         await fn(options)
     },
     async middleware(app, options = {}) {
+
+        
+
         if (options.admin) {
             await this.loadFunctionsFromFolder({
                 params: [app, options, scope],

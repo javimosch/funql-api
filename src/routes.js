@@ -12,6 +12,14 @@ module.exports = (app, options = {}) => {
         var debugWarn = getDebugInstance('routes', 2)
         var debugError = getDebugInstance('routes', 1)
 
+
+        if(options.bodyParser!==false){
+            const express = require('express')
+            app.use(options.bodyParser||express.json(typeof options.bodyParser==='object'?options.bodyParser:{
+                limit:"50mb"
+            }))
+        }
+        /*
         options.bodyParser = typeof options.bodyParser === 'undefined' ? true : options.bodyParser
         if(options.bodyParser!==false){
             const bodyParser = require('body-parser')
@@ -23,7 +31,7 @@ module.exports = (app, options = {}) => {
             ) 
         }else{
             debugWarn('bodyParser disabled, please implement your own bodyParser middleware to use POST route')
-        }
+        }*/
 
         var api = options.api || {}
         

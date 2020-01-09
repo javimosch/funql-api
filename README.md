@@ -8,10 +8,6 @@ Build your next function based api today.
 - **Transform responses in the server side**
 - **Namespaces**
 
-## Requirements
-
-- **body-parser**
-
 ## Server configuration
 
 ````js
@@ -111,7 +107,13 @@ funql.middleware(app,{
     bodyParser: false
 })
 
-//Feature: Custom bodyParser options
+//Feature: Use your own body parser
+app.use(require('body-parser').json())
+funql.middleware(app,{
+    bodyParser:false
+})
+
+//Feature: Custom bodyParser options (Will use built-in json parser)
 funql.middleware(app,{
     bodyParser: {
         limit: '50mb'
@@ -174,6 +176,6 @@ axios.get(`SERVER_URL/funql-api?body=${body}`, {
 
 ## Roadmap
 
-- 2019 Q2: Initial release
-- 2019 Q3: Load functions from folder
-- 2019 Q4: Client side dynamic api library
+- 2020 Q1: Client side dynamic api library
+- 2019 Q2: Admin GUI
+

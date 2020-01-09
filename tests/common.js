@@ -10,13 +10,7 @@ module.exports = {
         async function prepareServer(configureCallback, readyCallback) {
             const express = require('express')
             const server = express()
-            const bodyParser = require('body-parser')
-            server.use(
-                bodyParser.json({
-                    limit: '50mb'
-                })
-            )
-
+            
             funqlApi.reset()
 
             let p = configureCallback(server, funqlApi)
