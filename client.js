@@ -13,6 +13,10 @@ export async function funql_send(name, args = [], options = {}, globalOptions = 
         throw new Error('NAME_REQUIRED')
     }
 
+    if(typeof process ==='undefined' && typeof window !=='undefined'){
+        window.process = {env:{}}
+    }
+
     options.transform = !!options.transform && typeof options.transform !== 'string' ?
         options.transform.toString() :
         options.transform
