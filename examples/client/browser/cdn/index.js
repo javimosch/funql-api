@@ -13,7 +13,7 @@ funql.middleware(app,{
     allowCORS:true,
     api:{
         helloWorld(){
-            return "HELLO WORLD"
+            return ['HELLO','WORLD']
         }
     }
 })

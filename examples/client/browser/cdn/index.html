@@ -1,12 +1,14 @@
 
 <script type="module">
-    //import funql from 'https://cdn.jsdelivr.net/npm/funql-api@1.2.5/client.js'
-    import funql from 'http://localhost:3000/client.js'
+    import funql from 'https://cdn.jsdelivr.net/npm/funql-api@1.2.6/client.js'
     
-    const fql = funql('http://localhost:3000',{
-        
-    })
+    const fql = funql('http://localhost:3000')
     
-    fql('helloWorld').then(console.info)
+    fql('helloWorld',{},{
+        transform: function(arr){
+            return arr[0]
+            //HELLO
+        }
+    }).then(console.info)
 
 </script>
