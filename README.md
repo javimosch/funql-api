@@ -174,6 +174,11 @@ axios.get(`SERVER_URL/funql-api?body=${body}`, {
 //More features? Just ask ;) !
 ````
 
+## Tests
+
+- Requires Node >= 13.5
+- PORT 3000 available
+
 ## Roadmap
 
 - 2020 Q1: Client side dynamic api library
