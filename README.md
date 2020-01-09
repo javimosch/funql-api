@@ -2,19 +2,22 @@
 
 Build your next function based api today.
 
+This library allow you to build a function based API.
+Interact with the server-side with functions and promises.
+
 ## Features
 
 - **Load functions from FileSystem**
 - **Transform responses in the server side**
 - **Namespaces**
+- **Client-side library**
 
 ## Server configuration
 
 ````js
-const server = express()
-
+const app = express()
 //Normal usage: call the middleware
-funql.middleware(server, {
+funql.middleware(app, {
     /*defaults*/
     getMiddlewares:[],
     postMiddlewares:[],
@@ -22,143 +25,204 @@ funql.middleware(server, {
     allowOverwrite:false,
     attachToExpress:false,
     allowCORS: false,
-    bodyParser:true, //required for http post
+    bodyParser:true, //required for POST
     api: {
-        //functions can be a promise (optional)
         async helloWorld(name) {
             return `Hello ${name}`
         },
-        //this is a namespace
         backoffice:{
             getUsers(){
-                return ['Juan']
+                return ['Juan','Paco']
             }
         }
     }
 })
+````
 
-//Feature: Load functions form folders
+
+### Load functions from folder
+
+#### Basic usage
+
+```js
 await funqlApi.loadFunctionsFromFolder({
     path: require('path').join(process.cwd(),'functions')
 })
+```
 
-//Feature: Overwrite when loading functions
-await funqlApi.loadFunctionsFromFolder({
-    allowOverwrite:true,
-    path: require('path').join(process.cwd(),'functions')
-})
+#### Custom middlewares
 
-//Feature: Load functions into a namespace
-await funqlApi.loadFunctionsFromFolder({
-    namespace:'backoffice',
-    path: require('path').join(process.cwd(),'functions')
-})
+These middlewares will act only on the functions loaded from this path. These are not express middlewares!
 
-//Feature: Load functions support basic middlewares
-//These are different from the express middlewares (check above)
+```js
 await funqlApi.loadFunctionsFromFolder({
     namespace:'admin',
     path: require('path').join(process.cwd(),'functions')
     middlewares:[async function(){
-        //All the functions in namespace admin
-        //will invoke this middleware before running the 
-        //function.
-        //If we return {err:'something'}
-        //The function will not be called
-        //And the client will receive a 200 status
-        //with the response.
-        //useful for controlled exceptions.
-        return this.user.role!=='admin'?({err:401}):true
+//All the functions in namespace admin will invoke this middleware before running the function. If we return {err:'something'} The function will not be called and the client will receive a 200 status with the response. Useful for controlled exceptions.
+
+return this.user.role!=='admin'?
+({err:401}):true
+
     }]
 })
+```
 
-//Feature: Attach functions to express object
-funql.middleware(app,{
-    attachToExpress:true
+#### Overwrite existing functions in the same path
+
+If the function already exists, it will be overwritted.
+
+```js
+await funqlApi.loadFunctionsFromFolder({
+    allowOverwrite:true,
+    path: require('path').join(process.cwd(),'functions')
 })
-//Functions will be accessible by the express object:
-//app.api.helloWorld
-//app.api.backoffice.getUsers
+```
+
+#### Load functions into namespace
+
+```js
+await funqlApi.loadFunctionsFromFolder({
+    namespace:'backoffice',
+    path: require('path').join(process.cwd(),'functions')
+})
+```
+
+### Express object binding
+
+```js
+funql.middleware(app,{
+    attachToExpress:true,
+    api:{
+        helloWorld(){
+            return "Hello W"
+        }
+    }
+})
+console.log(app.api.helloWorld())
+//Hello W
+```
 
 
-//Feature: adding an express middleware to get
+### HTTP GET
+
+Optionally, allow GET calls to interact with your functions.
+
+```js
+funql.middleware(app,{
+    allowGet:true
+})
+```
+
+#### GET Middlewares
+
+```js
 funql.middleware(app,{
     allowGet:true,
     getMiddlewares: [
         function(req, res, next) {
-            //Here, you can implement your auth system
-            res.json('YOU_CANT_GET_ME')
+res.status(401).send('You are not allowed to request using GET!')
         }
     ]
 })
+```
 
-//Feature: Enable CORS to all request
+
+### CORS
+
+#### Allow all
+
+```js
 funql.middleware(app,{
     allowCORS:true
 })
+```
 
-//Feature: Enable CORS to certain origins
+#### Customize allowed origins
+
+```js
 funql.middleware(app,{
     allowCORS:['client1.domain.com','client2.domain.com']
 })
+```
 
-//Feature: Disable bodyParser (you will need to implement your own bodyParser middleware if you want to use normal http post)
-funql.middleware(app,{
-    bodyParser: false
-})
+### Body parser
 
-//Feature: Use your own body parser
+#### Disable body parser
+
+In case you want to implement your own body parser.
+
+```js
 app.use(require('body-parser').json())
 funql.middleware(app,{
     bodyParser:false
 })
+```
 
-//Feature: Custom bodyParser options (Will use built-in json parser)
+#### Built-in body parser options
+
+Give options to default express body parser.
+
+```js
 funql.middleware(app,{
     bodyParser: {
         limit: '50mb'
     }
 })
-
-//More features? Just ask ;) !
-````
+```
 
 ## Client configuration
 
-````js
+### Basic Usage (Client)
 
-//Normal Usage: Just a post request
+```js
 axios.post(`SERVER_URL/funql-api`, {
     name: 'helloWorld',
     args:['Juan']
 })
 .then(res => {
-    //res.data equal to 'Hello Juan'
+    //Hello Juan
 })
+/*
+server-side
+function helloWorld(name){
+    return `Hello ${name}`
+}
+*/
+```
 
-//Feature: namespaces
+### Feature: Namespaces
+
+Namespaces help you to organize you a bit.
+You can use it for versioning!
+
+```js
+axios.post(`SERVER_URL/funql-api`, {
+    namespace:'api.v1.users',
+    name: 'changePassword'
+})
+```
+
+### Feature: Transform the response in the server side
+
+```js
 axios.post(`SERVER_URL/funql-api`, {
     namespace:'backoffice',
-    name: 'getUsers'
-})
-.then(res => {
-    //res.data equal to ['Juan']
-})
-
-//Feature: transform in the server-side
-axios.post(`SERVER_URL/funql-api`, {
-    namespace:'backoffice',
-    name: 'getUsers',
+    name: 'helloWorld',
+    args:['Juan']
     transform: function(response) {
-        return response.map(r=>r.toLowerCase())
+        return response.toLowerCase()
     }.toString()
 })
 .then(res => {
-    //res.data equal to ['juan']
+    //juan
 })
+```
 
-//Feature: allowGet:true
-body = require('btoa')(JSON.stringify({
+### Feature: Use HTTP GET
+
+```js
+let body = require('btoa')(JSON.stringify({
     name: 'foo'
 }))
 axios.get(`SERVER_URL/funql-api?body=${body}`, {
@@ -168,16 +232,36 @@ axios.get(`SERVER_URL/funql-api?body=${body}`, {
 .then(res => {
     //res.data equal to 'Hello Juan'
 })
+/*
+server-side
+function helloWorld(name){
+    return `Hello ${name}`
+}
+*/
+```
 
 
+### Feature: Client library
 
-//More features? Just ask ;) !
-````
+Use your functions directly. Let's abstracts the xhr operations
+
+```html
+<script type="module">
+    
+import funql from 'https://cdn.jsdelivr.net/npm/funql-api@1.2.6/client.js'
+    
+const fql = funql('http://localhost:3000')
+fql('helloWorld','Juan').then(console.info)
+//Hello Juan
+
+</script>
+```
 
 ## Tests
 
 - Requires Node >= 13.5
-- PORT 3000 available
+- Requires PORT 3000 available
+- npm run test
 
 ## Roadmap
 
