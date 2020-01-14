@@ -1,5 +1,21 @@
 module.exports = {
-    getDebugInstance
+    getDebugInstance,
+    calculateElapsed,
+    stringify
+}
+
+function stringify(object = {}) {
+    const { parse, stringify } = require('flatted/cjs')
+    return stringify(object)
+}
+
+function calculateElapsed() {
+    var startDate = new Date();
+    return function() {
+        var endDate = new Date();
+        var seconds = (endDate.getTime() - startDate.getTime()) / 1000;
+        return seconds + "s";
+    };
 }
 
 function getDebugInstance(name, level = 4) {

@@ -26,14 +26,15 @@ function createClient(url, globalOptions = {}) {
       return executeBySocket.apply(this, [name, args, options, globalOptions]);
     }
 
-    return executeByHttp.apply(this, [name, args, options, globalOptions]);
+    return await executeByHttp.apply(this, [name, args, options, globalOptions]);
   };
 
   return client;
 }
 
 function getSocket(scope = {}) {
-  const debug = getDebugInstance(`funql (getSocket)`, 4, scope);
+  const debug = getDebugInstance(`getSocket`, 4, scope);
+  debug('GET SOCKET??');
   return new Promise((resolve, reject) => {
     if (scope.socket && scope.socket.isActive === true) {
       return scope.socket;
@@ -76,7 +77,7 @@ function getSocket(scope = {}) {
 }
 
 function executeBySocket(name, args, options, globalOptions) {
-  const debug = getDebugInstance(`funql (socket)`, 4, globalOptions);
+  const debug = getDebugInstance(`socket`, 4, globalOptions);
   return new Promise(async (resolve, reject) => {
     const elapsed = calculateElapsed();
     const socket = await getSocket(globalOptions);
@@ -104,18 +105,30 @@ function getRequestPayload(name, args = [], options = {}) {
   const request = { ...options,
     name: name,
     args: args,
-    namespace: options.namespace || options.ns || process.env.VUE_APP_FUNQL_NAMESPACE
+    ns: options.namespace || options.ns || process.env.VUE_APP_FUNQL_NAMESPACE
   };
   return request;
 }
 
 async function executeByHttp(name, args = [], options = {}, globalOptions = {}) {
-  const debug = getDebugInstance(`funql`, 4, globalOptions);
+  const debug = getDebugInstance(`http`, 4, globalOptions);
   const endpoint = options.endpoint || process.env.VUE_APP_FUNQL_ENDPOINT;
   const url = `${endpoint}/funql-api`;
-  const request = getRequestPayload(options);
+  const request = getRequestPayload(name, args, options);
   const elapsed = calculateElapsed();
-  const rawResponse = await fetch(`${url}?n=${name}&ns=${request.namespace}`, {
+  let fetchMethod = null;
+
+  if (typeof fetch !== 'undefined') {
+    fetchMethod = fetch;
+  } else {
+    const {
+      fetch
+    } = require('fetch-ponyfill')();
+
+    fetchMethod = fetch;
+  }
+
+  const rawResponse = await fetchMethod(`${url}?n=${name}&ns=${request.ns}`, {
     method: "POST",
     mode: "cors",
     headers: {
@@ -174,6 +187,6 @@ function getDebugInstance(name, level = 4, options = {}) {
         console.log.apply(this, args);
       };
     });
-    return debug(`${`funql:${name}`.padEnd(15, " ")} ${levelLabel[level].padEnd(7, " ")} ${`${Date.now()}`}`);
+    return debug(`${`fql-client:${name}`.padEnd(15, " ")} ${levelLabel[level].padEnd(7, " ")} ${`${Date.now()}`}`);
   }
 }

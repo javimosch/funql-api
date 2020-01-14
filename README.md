@@ -11,6 +11,7 @@ Interact with the server-side with functions and promises.
 - **Transform responses in the server side**
 - **Namespaces**
 - **Client-side library**
+- **Sockets support**
 
 ## Installation
 
@@ -272,6 +273,25 @@ fql('helloWorld','Juan').then(console.info)
 </script>
 ```
 
+#### Feature: Sockets speed
+
+Turnon sockets globally. (socket.io)
+
+```js
+//server    
+funql.middleware({
+    sockets:true
+})
+funql.listen(300, ()=>console.log('Listening at 3000'))
+```
+
+```js
+//client    
+const fql = funql('http://localhost:3000',{
+    connectionMode:'sockets'
+})
+```
+
 ## Tests
 
 - Requires Node >= 13.5
@@ -280,6 +300,5 @@ fql('helloWorld','Juan').then(console.info)
 
 ## Roadmap
 
-- 2020 Q1: Client side dynamic api library
-- 2019 Q2: Admin GUI
+- 2019 Q2: ADMIN Backoffice
 

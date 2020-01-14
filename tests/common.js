@@ -1,6 +1,6 @@
 module.exports = {
     prepareServer(configureCallback, readyCallback, options = {}) {
-        process.env.DEBUG = 'funql*'
+        process.env.DEBUG = 'funql*,fql*'
         const funql = require('../index')
         const axios = require('axios')
         const getPort = require('get-port')

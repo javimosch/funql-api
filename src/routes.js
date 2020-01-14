@@ -13,10 +13,10 @@ module.exports = (app, options = {}) => {
         var debugError = getDebugInstance('routes', 1)
 
 
-        if(options.bodyParser!==false){
+        if (options.bodyParser !== false) {
             const express = require('express')
-            app.use(options.bodyParser||express.json(typeof options.bodyParser==='object'?options.bodyParser:{
-                limit:"50mb"
+            app.use(options.bodyParser || express.json(typeof options.bodyParser === 'object' ? options.bodyParser : {
+                limit: "50mb"
             }))
         }
         /*
@@ -34,7 +34,7 @@ module.exports = (app, options = {}) => {
         }*/
 
         var api = options.api || {}
-        
+
 
         if (options.attachToExpress) {
             app.api = api || {}
@@ -61,6 +61,9 @@ module.exports = (app, options = {}) => {
             let args = []
             args.unshift(getPostHandler())
             unshiftCorsMiddleware(args)
+
+
+
             args.unshift('/funql-api')
             app.post.apply(app, args)
             debug('POST available without middlewares under /funql-api')
@@ -76,7 +79,7 @@ module.exports = (app, options = {}) => {
             debug(`POST available with ${options.postMiddlewares.length} middlewares under /funql-api`)
         }
 
-        function unshiftCorsMiddleware(args){
+        function unshiftCorsMiddleware(args) {
             if (options.allowCORS) {
                 if (options.allowCORS === true) {
                     args.unshift(require('cors')())
@@ -90,7 +93,7 @@ module.exports = (app, options = {}) => {
                         if (urls.length > 0) {
                             args.unshift(getCorsWhitelistMiddleware(urls))
                             app.options('/funql-api', require('cors')())
-                            debug(`CORS enabled for `,urls)
+                            debug(`CORS enabled for `, urls)
                         }
                     }
                 }
@@ -128,7 +131,8 @@ module.exports = (app, options = {}) => {
                     data.transform = require('atob')(data.transform)
                 }
                 data.name = req.query.name || data.name || req.params.name
-                data.namespace = req.query.ns || req.query.namespace || data.namespace || req.params.namespace
+                data.ns = req.query.ns || req.query.ns || data.ns || req.params.ns ||
+                    req.query.namespace || req.query.namespace || data.namespace || req.params.namespace
                 debug(data.name, 'GET', prettyjson.render(data))
                 await executeFunql(data, req, res)
             }
@@ -136,6 +140,9 @@ module.exports = (app, options = {}) => {
 
         function getPostHandler() {
             return async function configureFunqlRoute(req, res) {
+
+
+
                 if (req.query.multiparty === '1') {
                     var multiparty = require('multiparty')
                     var form = new multiparty.Form()
@@ -167,12 +174,15 @@ module.exports = (app, options = {}) => {
                 } else {
                     let data = req.body
 
-                    if(!req.body && options.bodyParser === false){
+                    data.ns = req.query.ns || req.query.ns || data.ns || req.params.ns ||
+                        req.query.namespace || req.query.namespace || data.namespace || req.params.namespace
+
+                    if (!req.body && options.bodyParser === false) {
                         debugError('POST route requires a bodyParser middleware')
-                        return res.status(500).json({err:500})
+                        return res.status(500).json({ err: 500 })
                     }
 
-                        // debug('POST',prettyjson.render(data))
+                    // debug('POST',prettyjson.render(data))
                     debug(data.name)
                     await executeFunql(data, req, res)
                 }
@@ -186,19 +196,32 @@ module.exports = (app, options = {}) => {
                 name
             }
 
-            let rootObject = api[name]
-
             let apiFunction = api[name]
 
-            if (data.namespace) {
+            const ns = data.ns
+            if (!!ns) {
                 try {
+                    let rootScope = api
 
-                    if(!api[data.namespace]){
-                        debugWarn(`Requested namespace '${data.namespace}' do not exists.`)
+                    function moveRootScope(ns) {
+                        let parts = ns.split('.')
+                        try {
+                            rootScope = rootScope[parts[0]]
+                        } catch (err) {
+                            debugWarn(data.name, `response is INVALID_NAMESPACE`)
+                            res.json({
+                                err: 'INVALID_NAMESPACE'
+                            })
+                        }
+                        parts.shift()
+                        if (parts.length == 0) {
+                            return
+                        } else {
+                            moveRootScope(parts.join('.'))
+                        }
                     }
-
-                    rootObject =  api[data.namespace] || {}
-                    apiFunction = api[data.namespace][name]
+                    moveRootScope(ns)
+                    apiFunction = rootScope[name]
                 } catch (err) {}
             }
 
