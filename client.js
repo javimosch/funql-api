@@ -77,7 +77,7 @@ function executeBySocket(name, args, options, globalOptions) {
         const elapsed = calculateElapsed();
         const socket = await getSocket(globalOptions);
         const request = {
-            ...getRequestPayload(name, args, options),
+            ...getRequestPayload(name, args, options, globalOptions),
             id: require("uniqid")()
         };
         socket.once("fn_" + request.id, response => {
@@ -94,7 +94,7 @@ function executeBySocket(name, args, options, globalOptions) {
     });
 }
 
-function getRequestPayload(name, args = [], options = {}) {
+function getRequestPayload(name, args = [], options = {}, globalOptions = {}) {
     options.transform = !!options.transform && typeof options.transform !== "string" ?
         options.transform.toString() :
         options.transform;
@@ -102,7 +102,7 @@ function getRequestPayload(name, args = [], options = {}) {
         ...options,
         name: name,
         args: args,
-        ns: options.namespace || options.ns || process.env.VUE_APP_FUNQL_NAMESPACE
+        ns: options.namespace || options.ns || globalOptions.namespace || globalOptions.ns || process.env.VUE_APP_FUNQL_NAMESPACE || process.env.FUNQL_DEFAULT_NAMESPACE
     };
     return request;
 }
@@ -117,9 +117,9 @@ async function executeByHttp(
 
 
 
-    const endpoint = options.endpoint || process.env.VUE_APP_FUNQL_ENDPOINT;
+    const endpoint = options.endpoint || process.env.VUE_APP_FUNQL_ENDPOINT || process.env.FUNQL_ENDPOINT;
     const url = `${endpoint}/funql-api`;
-    const request = getRequestPayload(name, args, options);
+    const request = getRequestPayload(name, args, options, globalOptions);
     const elapsed = calculateElapsed();
 
 

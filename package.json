@@ -1,7 +1,7 @@
 {
     "name": "funql-api",
     "main": "index.js",
-    "version": "1.2.8",
+    "version": "1.2.9",
     "repository": "git@github.com:javimosch/funql-api.git",
     "author": "Javi <arancibiajav@gmail.com>",
     "license": "MIT",
