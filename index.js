@@ -54,6 +54,7 @@ module.exports = {
         const debugError = getDebugInstance("index", 1);
         app.use(function(err, req, res, next) {
             debugError('ERROR MIDDLEWARE', err)
+            next()
         })
 
     },
