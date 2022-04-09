@@ -15,7 +15,7 @@
         "express": "^4.17.1",
         "get-port": "^5.0.0",
         "jest": "^24.9.0",
-        "moment": "^2.24.0"
+        "moment": "^2.29.2"
     },
     "scripts": {
         "test": "jest --detectOpenHandles"
