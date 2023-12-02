@@ -1,5 +1,6 @@
 const { getDebugInstance } = require('./utils')
-
+const fs = require('fs').promises;
+const isDirectory = async path => (await fs.stat(path)).isDirectory()
 var debug, debugWarn, debugError
 module.exports = mainScope => {
     debug = getDebugInstance('loader')
@@ -18,19 +19,21 @@ module.exports = mainScope => {
         let readdirPath = options.path
         var sander = require('sander')
 
-        if (!(await sander.exists(readdirPath))) {
+        if (!(await isDirectory(readdirPath))) {
             debugError(
-                'Failed to load api functions from',
+                'FFailed to load api functions from',
                 readdirPath
-                .split(__dirname)
-                .join('')
-                .split(process.cwd())
-                .join('')
             )
             return
         }
 
         let files = await sander.readdir(readdirPath)
+
+        /*
+        console.log('READIR',{
+            readdirPath,
+            files
+        })*/
 
         files = files
             .filter(f => f !== 'index.js')
