@@ -12,7 +12,7 @@ module.exports = {
     },
     async middleware(app, options = {}) {
         scope.app = app;
-
+        scope.app.getFunqlScope = ()=>scope
         options.api = options.api || {};
         options.api = {
             ...scope.api,

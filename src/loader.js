@@ -1,6 +1,8 @@
 const { getDebugInstance } = require('./utils')
 const fs = require('fs').promises;
 const isDirectory = async path => (await fs.stat(path)).isDirectory()
+
+
 var debug, debugWarn, debugError
 module.exports = mainScope => {
     debug = getDebugInstance('loader')
@@ -45,7 +47,7 @@ module.exports = mainScope => {
 
         // debug(`Reading ${files.length} api funtions from ${options.path}`)
 
-        files.forEach(f => {
+        for (const f of files) {
             let requirePath = path.join(options.path, f)
 
             mainScope.apiInfo = mainScope.apiInfo || {}
@@ -53,8 +55,13 @@ module.exports = mainScope => {
                 mainScope.apiInfo[f.split('.js').join('')] || {}
             mainScope.apiInfo[f.split('.js').join('')].path = requirePath
 
-            self[f.split('.')[0]] = require(requirePath)
-        })
+            var requireFromString = require('require-from-string');
+            //self[f.split('.')[0]] = require(requirePath)
+            const requirePathStr = await fs.readFile(requirePath, 'utf8');
+            self[f.split('.')[0]] = requireFromString(requirePathStr);
+
+            
+        }
         let count = 0
         Object.keys(self)
             .map((k, index) => {
@@ -134,7 +141,10 @@ function onReady(mainScope, fn, impl, options = {}) {
     if (!allowOverwrite && typeof functionParent[fn.name] !== 'undefined') {
         debugWarn(fn.name, ' duplicated. Skipping. (overwrite is disabled)')
     } else {
-        // debug('API Function file', fn.name, 'loaded')
+        
+        //debug('API Function file', fn.handler.toString(), 'loaded')
+        //debug('API Function file', fn.name, 'loaded')
+
         functionParent[fn.name] = function() {
             let optionsScope = {}
             if (typeof options.scope === 'function') {
