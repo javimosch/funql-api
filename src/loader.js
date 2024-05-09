@@ -17,13 +17,13 @@ module.exports = mainScope => {
         }
 
         var path = require('path')
-            // let readdirPath = path.join(process.cwd(), options.path)
+        // let readdirPath = path.join(process.cwd(), options.path)
         let readdirPath = options.path
         var sander = require('sander')
 
         if (!(await isDirectory(readdirPath))) {
             debugError(
-                'FFailed to load api functions from',
+                'Failed to load api functions from',
                 readdirPath
             )
             return
@@ -51,16 +51,20 @@ module.exports = mainScope => {
             let requirePath = path.join(options.path, f)
 
             mainScope.apiInfo = mainScope.apiInfo || {}
-            mainScope.apiInfo[f.split('.js').join('')] =
-                mainScope.apiInfo[f.split('.js').join('')] || {}
-            mainScope.apiInfo[f.split('.js').join('')].path = requirePath
+            let name = f.split('.js').join('')
+            mainScope.apiInfo[name] =
+                mainScope.apiInfo[name] || {}
+
+            mainScope.apiInfo[name].path = requirePath
+
+            mainScope.apiInfo[name].namespace = options.namespace || ""
 
             var requireFromString = require('require-from-string');
             //self[f.split('.')[0]] = require(requirePath)
             const requirePathStr = await fs.readFile(requirePath, 'utf8');
             self[f.split('.')[0]] = requireFromString(requirePathStr);
 
-            
+
         }
         let count = 0
         Object.keys(self)
@@ -107,8 +111,8 @@ module.exports = mainScope => {
             .join('')
         debug(
             `${count} functions loaded from ${readdirShortPath
-        .split(process.cwd())
-        .join('')}${ns}`
+                .split(process.cwd())
+                .join('')}${ns}`
         )
     }
 }
@@ -141,11 +145,11 @@ function onReady(mainScope, fn, impl, options = {}) {
     if (!allowOverwrite && typeof functionParent[fn.name] !== 'undefined') {
         debugWarn(fn.name, ' duplicated. Skipping. (overwrite is disabled)')
     } else {
-        
+
         //debug('API Function file', fn.handler.toString(), 'loaded')
         //debug('API Function file', fn.name, 'loaded')
 
-        functionParent[fn.name] = function() {
+        functionParent[fn.name] = function () {
             let optionsScope = {}
             if (typeof options.scope === 'function') {
                 optionsScope = options.scope(this) || {}
@@ -165,21 +169,28 @@ function onReady(mainScope, fn, impl, options = {}) {
             // middlwares
             if (options.middlewares) {
                 let args = arguments
-                return new Promise(async(resolve, reject) => {
+                let middlewareScope = Object.assign({},mergedScope,{
+                    params:args
+                })
+                return new Promise(async (resolve, reject) => {
                     try {
-                        let res = await Promise.all(
-                            options.middlewares.map(m => m.apply(mergedScope, middlewareArgs))
-                        )
-                        if (res.find(r => !!r && !!r.err)) {
-                            r = res.find(r => !!r.err)
-                            resolvePromise(resolve, r)
-                        } else {
-                            let finalResult = callApiFunction(args)
-                            if (finalResult instanceof Promise) {
-                                finalResult = await finalResult
+
+                        for (let middleware of options.middlewares) {
+                            let res = middleware.apply(middlewareScope, middlewareArgs)
+                            if(res instanceof Promise){
+                                res = await res
                             }
-                            resolve(finalResult)
+                            if (!!res && !!res.err) {
+                                return resolvePromise(resolve, res)
+                            }
                         }
+
+                        let finalResult = callApiFunction(args)
+                        if (finalResult instanceof Promise) {
+                            finalResult = await finalResult
+                        }
+                        resolve(finalResult)
+
                     } catch (err) {
                         rejectPromise(reject, err)
                     }
@@ -195,8 +206,8 @@ function onReady(mainScope, fn, impl, options = {}) {
                 debugFn(
                     fn.name,
                     r instanceof Array ?
-                    'response has ' + r.length + ' items' :
-                    `response is ${stringify(r)}`,
+                        'response has ' + r.length + ' items' :
+                        `response is ${stringify(r)}`,
                     r instanceof Array ? `First item is ${stringify(r[0])}` : ''
                 )
                 resolve(r)
@@ -211,7 +222,7 @@ function onReady(mainScope, fn, impl, options = {}) {
                     r = impl.apply(mergedScope || {}, args)
                 }
                 if (r instanceof Promise) {
-                    return new Promise(async(resolve, reject) => {
+                    return new Promise(async (resolve, reject) => {
                         try {
                             await resolvePromise(resolve, r)
                         } catch (err) {
@@ -222,8 +233,8 @@ function onReady(mainScope, fn, impl, options = {}) {
                     debug(
                         fn.name,
                         r instanceof Array ?
-                        'response has ' + r.length + ' items' :
-                        `response is ${stringify(r)}`,
+                            'response has ' + r.length + ' items' :
+                            `response is ${stringify(r)}`,
                         r instanceof Array ? `First item is ${stringify(r[0])}` : ''
                     )
                     return r

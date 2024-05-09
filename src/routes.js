@@ -33,12 +33,12 @@ module.exports = (app, options = {}) => {
             debugWarn('bodyParser disabled, please implement your own bodyParser middleware to use POST route')
         }*/
 
-        var api = options.api || {}
+        //options.scope should exists at this point
+        var api = options.scope.api
 
 
         if (options.attachToExpress) {
-            app.api = api || {}
-            api = app.api
+            app.api = api
         }
 
         if (options.allowGet) {
@@ -203,6 +203,8 @@ module.exports = (app, options = {}) => {
                 try {
                     let rootScope = api
 
+                    
+
                     function moveRootScope(ns) {
                         let parts = ns.split('.')
                         try {
@@ -220,7 +222,20 @@ module.exports = (app, options = {}) => {
                             moveRootScope(parts.join('.'))
                         }
                     }
-                    moveRootScope(ns)
+                    
+                    if(ns.includes('.')){
+                        moveRootScope(ns)
+                    }else{
+                        rootScope = rootScope[ns]                        
+                    }
+
+                    debug({
+                        rootScope,
+                        ns,
+                        data,
+                        name
+                    })
+
                     apiFunction = rootScope[name]
                 } catch (err) {}
             }

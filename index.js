@@ -1,6 +1,9 @@
 require("colors");
 
-let scope = {};
+let scope = {
+    //Functions goes here
+    api:{}
+};
 
 module.exports = {
     reset() {
@@ -12,12 +15,26 @@ module.exports = {
     },
     async middleware(app, options = {}) {
         scope.app = app;
-        scope.app.getFunqlScope = ()=>scope
-        options.api = options.api || {};
+        
+        scope.app.getFunqlScope = ()=>{
+            let _scope = {...scope}
+            delete _scope.app
+            return _scope
+        }
+        
+        //Apis defined at middleware level are injected into scope
+        const optionsApis = options.api || {};
+        for(let key in optionsApis){
+            scope.api[key] = optionsApis[key]
+        }
+
+        options.scope = scope 
+        
+        /*
         options.api = {
             ...scope.api,
             ...options.api
-        };
+        };*/
 
         if (!!options.sockets) {
             const http = configureHttpServer(scope);
